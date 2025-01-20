@@ -33,7 +33,7 @@ subscription_id et rg_name sont récupérables dans votre portail Azure.
 
 pub_key est le fichier de clé publique qui sera installé sur vos VM, il est donc nécéssaire de créer une paire dont vous aurez la clé privée dans votre ordinateur.
 
-Conseil : une fois la clé créée, créez un fichier "~/.ssh/config" avec le contenu suivant, en modifiant avec le filepath de votre clé :
+Une fois la clé créée, créez un fichier "~/.ssh/config" avec le contenu suivant, en modifiant avec le filepath de votre clé :
 
 ```    
 Host *
@@ -44,10 +44,10 @@ Host *
 
 address_prefix_* seront récupérables une fois votre infrastructure complètement déployée. Il faudra vous connecter au master (ssh azureadm@master) et taper la commande suivante : 
 
-    ```
-    kubectl get ipamblocks.crd.projectcalico.org \
-    -o jsonpath="{range .items[*]}{'podNetwork: '}{.spec.cidr}{'\t NodeIP: '}{.spec.affinity}{'\n'}"
-    ```
+```
+kubectl get ipamblocks.crd.projectcalico.org \
+-o jsonpath="{range .items[*]}{'podNetwork: '}{.spec.cidr}{'\t NodeIP: '}{.spec.affinity}{'\n'}"
+```
 
 # Déploiement de l'infrastructure
 
