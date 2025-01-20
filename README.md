@@ -35,7 +35,9 @@ pub_key est le fichier de clé publique qui sera installé sur vos VM, il est do
 
 Une fois la clé créée, créez un fichier "~/.ssh/config" avec le contenu suivant, en modifiant avec le filepath de votre clé :
 
-```    
+```
+#~/.ssh/config
+
 Host *
     User azureadm
     IdentityFile ~/.ssh/id_rsa_azure
@@ -79,11 +81,10 @@ Information supplémentaire : vous pouvez agir sur toutes les variables, assurez
 
 # Récupération de l'inventaire
 
-Une fois les ressources déployées, créez votre inventaire avec le script : 
+Une fois les ressources déployées, créez votre inventaire avec le script depuis le : 
 
 ```
-cd ..
-./script/update_hosts_ansible.sh all <insérez_votre_resourge_group_name> # ./script/update_hosts_ansible.sh all 1-5816a712-playground-sandbox
+sudo ../script/update_hosts_ansible.sh all <insérez_votre_resourge_group_name> # ./script/update_hosts_ansible.sh all 1-5816a712-playground-sandbox
 ```
 
 Le script va récupérer l'instance "master" et les "workers" dans le ressource_group que vous aurez indiqué. Il va ensuite mettre à jour /etc/hosts ainsi que le fichier ./ansible/inventory.yaml.
