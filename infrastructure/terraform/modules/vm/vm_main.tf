@@ -12,7 +12,7 @@ resource "azurerm_linux_virtual_machine" "kube_vm" {
 
     admin_ssh_key {
         username   = "azureadm"
-        public_key = file("~/.ssh/id_rsa_azure.pub")
+        public_key = file(var.pub_key)
     }
 
     boot_diagnostics {

@@ -33,6 +33,7 @@ module "vm" {
   sa1-boot-diagnostics_uri      = module.storage_accounts.sa1-boot-diagnostics-uri
   kube_nics_id                  = module.virtual_networks.kube_nics_id
   depends_on                    = [module.virtual_networks, module.storage_accounts, time_sleep.wait_10_seconds]
+  pub_key                       = var.pub_key
 }
 
 module "traffic_rules" {

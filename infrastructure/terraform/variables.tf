@@ -4,6 +4,7 @@ variable location {}
 variable rg_name {}
 variable environment {}
 variable "vm_count" {}
+variable "pub_key"{}
 
 variable "default_tags" {
   type = map(string)
