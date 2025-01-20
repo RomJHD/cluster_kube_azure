@@ -94,7 +94,9 @@ Le script va récupérer l'instance "master" et les "workers" dans le ressource_
 Une fois l'inventaire mis à jour, lancez le playbook via la commande : 
 
 ```
-cd ansible
+cd ../ansible
+```
+``` 
 ansible-playbook main.yml -i inventory.yml
 ```
 
