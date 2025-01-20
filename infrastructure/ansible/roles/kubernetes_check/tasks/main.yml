@@ -1,0 +1,24 @@
+---
+- name: Check the cluster status
+  ansible.builtin.command: "kubectl get nodes"
+  args:
+    chdir: /home/{{ regular_user }}
+  environment:
+    KUBECONFIG: /home/{{ regular_user }}/.kube/config
+  register: cluster_initial
+
+- name: Top the cluster status
+  ansible.builtin.command: "kubectl top nodes"
+  args:
+    chdir: /home/{{ regular_user }}
+  environment:
+    KUBECONFIG: /home/{{ regular_user }}/.kube/config
+  register: cluster_top
+
+- name: Displaying the Cluster status
+  ansible.builtin.debug:
+    msg: "Cluster status: {{ cluster_initial.stdout }}"
+
+- name: Displaying the Cluster top status
+  ansible.builtin.debug:
+    msg: "Cluster status: {{ cluster_top.stdout }}"

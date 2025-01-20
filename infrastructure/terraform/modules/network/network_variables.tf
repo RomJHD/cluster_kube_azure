@@ -1,0 +1,15 @@
+variable vnet_address_space {}
+variable gateway_snet_subnet_address_space {}
+variable dns_subnet_address_space {}
+variable azb_subnet_address_space {}
+variable apps1_subnet_address_space {}
+variable apps2_subnet_address_space {}
+variable location {}
+variable region {}
+variable rg_name {}
+variable environment {}
+variable "vm_count" {}
+variable "default_tags" {}
+variable address_prefix_master {}
+variable address_prefix_worker1 {}
+variable address_prefix_worker2 {}

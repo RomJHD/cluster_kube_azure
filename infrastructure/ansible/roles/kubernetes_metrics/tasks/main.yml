@@ -1,0 +1,18 @@
+---
+- name: Validate the CSRs from workers
+  shell: kubectl get csr | awk '/kubernetes.io\/kubelet-serving/ && $6 == "Pending" {print $1}' | xargs -I {} kubectl certificate approve {}
+
+- name: Wait for metrics-server pod become created
+  shell: "kubectl get po --namespace=kube-system --selector k8s-app=metrics-server --output=jsonpath='{.items[*].metadata.name}'"
+  register: metrics_server_pods_created
+  until: item in metrics_server_pods_created.stdout
+  retries: 10
+  delay: 30
+  with_items:
+    - metrics-server
+
+- name: Wait for metrics-server pod become ready
+  shell: "kubectl wait --namespace=kube-system --for=condition=Ready pods -l k8s-app=metrics-server --timeout=600s"
+  register: metrics_server_pod_ready
+
+- debug: var=metrics_server_pod_ready.stdout_lines

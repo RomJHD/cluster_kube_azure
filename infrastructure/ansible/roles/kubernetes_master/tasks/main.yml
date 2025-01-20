@@ -1,0 +1,180 @@
+---
+- name: Create an Empty file for Kubeadm configuring
+  copy:
+    content: ""
+    dest: /etc/kubernetes/kubeadm-config.yaml
+    force: no
+
+- name: Configure container runtime
+  blockinfile:
+    path: /etc/kubernetes/kubeadm-config.yaml
+    block: |
+      kind: ClusterConfiguration
+      apiVersion: kubeadm.k8s.io/v1beta3
+      networking:
+        podSubnet: "192.168.0.0/16"
+
+      ---
+      kind: KubeletConfiguration
+      serverTLSBootstrap: true
+      apiVersion: kubelet.config.k8s.io/v1beta1
+      runtimeRequestTimeout: "15m"
+      cgroupDriver: "systemd"
+      systemReserved:
+        cpu: 100m
+        memory: 350M
+      kubeReserved:
+        cpu: 100m
+        memory: 50M
+      enforceNodeAllocatable:
+      - pods
+
+- name: Initialize the cluster
+  shell: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml >> cluster_initialized.log
+  args:
+    chdir: /home/{{ regular_user }}
+    creates: cluster_initialized.log
+  register: kubeadm_init_result
+
+- name: Create .kube directory
+  become: yes
+  become_user: "{{ regular_user }}"
+  file:
+    path: $HOME/.kube
+    state: directory
+    mode: 0755
+
+- name: Copy admin.conf to User's kube config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/{{ regular_user }}/.kube/config
+    remote_src: yes
+    owner: "{{ regular_user }}"
+
+- name: Export the config
+  ansible.builtin.shell: "export KUBECONFIG=/home/azureadm/.kube/config"
+
+- name: Install Tigera Operator
+  become: yes
+  become_user: "{{ regular_user }}"
+  shell: kubectl create -f {{ tigera_operator_yaml_url }} >> pod_tigera_setup.log
+  args:
+    chdir: $HOME
+    creates: pod_network_setup.log
+
+# - name: Install Calico
+#   become: yes
+#   become_user: "{{ regular_user }}"
+#   block:
+#     - name: Get Calico.yaml
+#       shell: curl {{ calico_yaml_url }} -o "/tmp/calico.yaml" 
+#     - name: Change calico_backend and probes
+#       shell: |
+#         sed -i 's/calico_backend: "bird"/calico_backend: "none"/' "/tmp/calico.yaml"
+#         sed -i 's/- -bird-live/#- -bird-live/' "/tmp/calico.yaml"
+#         sed -i 's/- -bird-ready/#- -bird-ready/' "/tmp/calico.yaml"
+#     - name: Apply Calico.yaml
+#       shell: kubectl create -f /tmp/calico.yaml >> pod_calico_setup.log
+#       args:
+#         chdir: $HOME
+#         creates:  pod_calico_setup.log
+
+# - name: Install Calico IPIP Mode
+#   become: yes
+#   become_user: "{{ regular_user }}"
+#   block:
+#     - name: Download Calico.yaml
+#       get_url:
+#         url: "{{ calico_yaml_url }}"
+#         dest: "/tmp/calico.yaml"
+#     - name: Set calico_backend to none
+#       replace:
+#         path: "/tmp/calico.yaml"
+#         regexp: 'calico_backend: "bird"'
+#         replace: 'calico_backend: "none"'
+#     - name: Comment out bird-live probe
+#       replace:
+#         path: "/tmp/calico.yaml"
+#         regexp: '^- -bird-live'
+#         replace: '#- -bird-live'
+#     - name: Comment out bird-ready probe
+#       replace:
+#         path: "/tmp/calico.yaml"
+#         regexp: '^- -bird-ready'
+#         replace: '#- -bird-ready'
+#     - name: Apply Calico.yaml
+#       shell: kubectl apply -f /tmp/calico.yaml
+#       args:
+#         chdir: $HOME
+
+- name: Install Calico VXLan
+  become: yes
+  become_user: "{{ regular_user }}"
+  block:
+    - name: Download Calico.yaml
+      get_url:
+        url: "{{ calico_vxlan_yaml_url }}"
+        dest: "/tmp/calico-vxlan.yaml"
+    - name: Apply Calico.yaml
+      shell: kubectl apply -f /tmp/calico-vxlan.yaml >> pod_calico_setup.log
+      args:
+        chdir: $HOME
+        creates: pod_calico_setup.log
+
+- name: Forward IP persistently if required
+# the below blocks has all tasks for ip forwarding both runtime and persistent
+  block:
+    - name: Forwarding the IP in sysctl
+      lineinfile:
+        path: /etc/sysctl.conf
+        line: "net.ipv4.ip_forward=1"
+        state: present
+      register: forwarded 
+    
+    - name: Change the ip_forward for runtime
+      shell: "sysctl -w net.ipv4.ip_forward=1"
+      
+    - name: Reloading the sysctl config
+      shell: "sysctl -p /etc/sysctl.conf"
+      when: forwarded is changed 
+  when: ip_forward_result.stdout != '1'
+
+- name: Restart kubelet service
+  become: yes
+  ansible.builtin.systemd:
+    name: kubelet
+    state: restarted
+
+- name: Retrieve Join Command
+  shell: kubeadm token create --print-join-command
+  register: join_command_raw
+
+- name: Set Join Command
+  set_fact:
+    join_command: "{{ join_command_raw.stdout_lines[0] }}"
+
+- name: Download metrics-server components.yaml
+  get_url:
+    url: https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+    dest: /tmp/components.yaml
+
+- name: Get the master's hostname in lowercase
+  shell: hostname | tr '[:upper:]' '[:lower:]'
+  register: master_hostname
+  changed_when: false
+
+- name: Insert nodeName before containers line
+  shell: |
+    sed '/containers:/i\      nodeName: {{ master_hostname.stdout.strip() }}' /tmp/components.yaml > temp.yaml && sudo mv temp.yaml /tmp/components.yaml
+  register: replace_result
+
+- name: Apply the metrics-server manifest
+  become: yes
+  become_user: "{{ regular_user }}"
+  shell: kubectl apply -f /tmp/components.yaml
+  args:
+    executable: /bin/bash
+
+- name: Wait while the metrics pod is creating (25sec real actually)
+  pause:
+    seconds: 10

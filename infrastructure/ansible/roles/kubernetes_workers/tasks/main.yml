@@ -1,0 +1,67 @@
+---
+- debug:
+    var: hostvars['master1'].ansible_locally_reachable_ips
+    
+- name: Enable TCP port 6443 (On Master) is able to connect from Worker
+  wait_for: 
+    host: "{{ hostvars['master1'].ansible_locally_reachable_ips.ipv4[0] }}"
+    port: 6443
+    timeout: 1
+
+- name: Install Kubectl
+  apt:
+    name: kubectl={{ short_version }}
+    state: present
+    force: yes
+
+- name: Get kubeconfig from master1
+  slurp:
+    src: /etc/kubernetes/admin.conf
+  delegate_to: master1
+  register: admin_conf
+
+- name: Create admin.conf file on worker
+  copy:
+    dest: /tmp/admin.conf
+    content: "{{ admin_conf.content | b64decode }}"
+
+- name: Create .kube directory
+  become: yes
+  become_user: "{{ regular_user }}"
+  file:
+    path: $HOME/.kube
+    state: directory
+    mode: 0755
+
+- name: Copy admin.conf to User's kube config
+  copy:
+    src: /tmp/admin.conf
+    dest: /home/{{ regular_user }}/.kube/config
+    remote_src: yes
+    owner: "{{ regular_user }}"
+
+- name: Export the config
+  become_user: "{{ regular_user }}"
+  ansible.builtin.shell: |
+    export "KUBECONFIG=/home/{{ regular_user }}/.kube/config"
+    echo 'export "KUBECONFIG=/home/{{ regular_user }}/.kube/config"' >> ~/.bashrc
+    bash -c "source ~/.bashrc"
+
+- name: Restart kubelet service
+  become: yes
+  ansible.builtin.systemd:
+    name: kubelet
+    state: restarted
+
+- name: Clean up temporary file
+  ansible.builtin.file:
+    path: /tmp/admin.conf
+    state: absent
+
+- name: Join worker to cluster
+  shell: "{{ hostvars['master1'].join_command }} >> node_joined.log"
+  args:
+    chdir: /home/azureadm
+    creates: node_joined.log
+  delegate_to: "{{ item }}"
+  with_items: "{{ ansible_play_hosts }}"
