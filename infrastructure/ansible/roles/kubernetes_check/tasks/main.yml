@@ -22,3 +22,16 @@
 - name: Displaying the Cluster top status
   ansible.builtin.debug:
     msg: "Cluster status: {{ cluster_top.stdout }}"
+
+- name: Display the pods CIDR
+  ansible.builtin.command: >
+    kubectl get ipamblocks.crd.projectcalico.org -o jsonpath='{range .items[*]}{"podNetwork: "}{.spec.cidr}{"\t NodeIP: "}{.spec.affinity}{"\n"}'
+  args:
+    chdir: /home/{{ regular_user }}
+  environment:
+    KUBECONFIG: /home/{{ regular_user }}/.kube/config
+  register: cluster_pods_cidr
+  ignore_errors: yes
+
+- debug:
+    var: cluster_pods_cidr

@@ -1,9 +1,9 @@
 [master]
-master1 ansible_host=13.84.247.136 ansible_user=azureadm ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+master1 ansible_host=52.183.212.2 ansible_user=azureadm ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
 [workers]
-worker1 ansible_host=13.84.247.161 ansible_user=azureadm ansible_ssh_common_args='-o StrictHostKeyChecking=no'
-worker2 ansible_host=13.84.247.167 ansible_user=azureadm ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+worker1 ansible_host=52.189.183.92 ansible_user=azureadm ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+worker2 ansible_host=52.183.212.15 ansible_user=azureadm ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
 [all:vars]
 ansible_python_interpreter=/usr/bin/python3

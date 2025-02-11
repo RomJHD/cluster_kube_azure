@@ -4,7 +4,8 @@
   vars:
     cni_plugin_version: https://github.com/containernetworking/plugins/releases/download/v1.6.2/cni-plugins-linux-amd64-v1.6.2.tgz
     regular_user: azureadm
-    short_version: 1.31.*
+    short_version: 1.29.*
+    kube_version: v1.29
     tigera_operator_yaml_url: https://raw.githubusercontent.com/projectcalico/calico/v3.29.1/manifests/tigera-operator.yaml
     calico_yaml_url: https://raw.githubusercontent.com/projectcalico/calico/v3.29.1/manifests/calico.yaml
   roles:
@@ -15,10 +16,12 @@
   become: true
   vars:
     regular_user: azureadm
-    short_version: 1.31.*
+    short_version: 1.29.*
+    kube_version: v1.29
     tigera_operator_yaml_url: https://raw.githubusercontent.com/projectcalico/calico/v3.29.1/manifests/tigera-operator.yaml
     calico_yaml_url: https://raw.githubusercontent.com/projectcalico/calico/v3.29.1/manifests/calico.yaml
     calico_vxlan_yaml_url: https://raw.githubusercontent.com/projectcalico/calico/v3.29.1/manifests/calico-vxlan.yaml
+  roles:
     - kubernetes_master
 
 - name: Configure Workers Nodes
@@ -26,7 +29,8 @@
   become: true
   vars:
     regular_user: azureadm
-    short_version: 1.31.*
+    short_version: 1.29.*
+    kube_version: v1.29
   roles:
     - kubernetes_workers
 

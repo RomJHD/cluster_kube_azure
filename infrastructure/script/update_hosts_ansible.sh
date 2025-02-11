@@ -7,16 +7,16 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # Check if a tag value is provided
-if [ "$#" -ne 2 ]; then
+if [ "$#" -ne 3 ]; then
    echo "Usage: $0 <resource-group-name> <tag-value>"
-   echo "Example: $0 myrg worker"
+   echo "Example: $0 worker myrg ./inventory.yml "
    exit 1
 fi
 
 RESOURCE_GROUP=$2
 TAG_VALUE=$1
 USER=$(logname)  # Get the current logged-in user
-INVENTORY_FILE="/home/romainj/azure/moduled/ansible/inventory.yml"  # Replace with the path to your inventory file
+INVENTORY_FILE=$3  # Replace with the path to your inventory file
 
 # Check if 'all' is selected and adjust the query accordingly
 if [ "$TAG_VALUE" == "all" ]; then

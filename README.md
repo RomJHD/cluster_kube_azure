@@ -16,7 +16,7 @@ Chaque dossier est expliqué ci-dessous.
 
 Le projet est créé pour fonctionner avec une Azure subscription (sub) et un Azure Resource Group (RG) dans lequel vous avez un maximum de droits. Le contexte actuel du projet est un RG mis à ma disposition par CloudGuru. L'infrastructure actuelle est assez simple, tous les prérequis sont donc remplis par le RG mis à disposition par CloudGuru.
 
-# Variables
+# Variables et préparation
 
 Pour le bon déploiement du projet, il vous faudra 5 variables primordiales, elles seront à renseigner dans le fichier "./terraform/default.tfvars" :
 
@@ -58,6 +58,8 @@ Une fois les 3 premières variables renseignées dans votre fichier tfvars, ouvr
 ```
 az login
 ```
+
+Information supplémentaire : Comme les subs et les RG changent toujours, le tfstate sera corrompu à chaque renouvellement de la sandbox Azure. Il faut donc supprimer les fichiers "terraform.tfstate" et "terraform.tfstate.lock" avant de lancer un "terraform init".
 
 Une fois la connexion effectuée, lancez l'initialisation de Terrafom :
 

@@ -61,6 +61,7 @@
   args:
     chdir: $HOME
     creates: pod_network_setup.log
+  ignore_errors: true
 
 # - name: Install Calico
 #   become: yes
@@ -120,6 +121,7 @@
       args:
         chdir: $HOME
         creates: pod_calico_setup.log
+      ignore_errors: true
 
 - name: Forward IP persistently if required
 # the below blocks has all tasks for ip forwarding both runtime and persistent
@@ -174,7 +176,4 @@
   shell: kubectl apply -f /tmp/components.yaml
   args:
     executable: /bin/bash
-
-- name: Wait while the metrics pod is creating (25sec real actually)
-  pause:
-    seconds: 10
+  ignore_errors: true
